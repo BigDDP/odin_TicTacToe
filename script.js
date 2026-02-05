@@ -13,6 +13,12 @@ const init = (() => {
         gameBoard.reset();
     });
 
+    allCells.forEach((cell, index) => {
+        cell.addEventListener("click", () => {
+            gameController.playRound(index);
+        });
+    });
+
     return {
         playerElement, 
         allCells, 
@@ -40,7 +46,6 @@ const controlDOM = (() => {
 
     const getProps = () => gameBoard.state.properties;
 
-    // --- public UI API ---
     const formSubmit = (player1) => {
         showGameUI();
         setStatus(`${player1.name}: ${player1.marker}`);
@@ -63,10 +68,8 @@ const controlDOM = (() => {
     };
 
     const reset = () => {
-        // UI-only reset
         clearBoardUI();
 
-        // Update status only if props exist
         const props = getProps();
         if (!props) {
         setStatus("");
@@ -94,31 +97,28 @@ const gameController = (() => {
             value: value,
             marker: marker,
             name: name
-        }
+        };
     }
 
-    init.allCells.forEach((cell) => {
-        cell.addEventListener("click", () => {
-            let board = gameBoard.state.board;
-            let props = gameBoard.state.properties;
+    const playRound = (index) => {
+        const board = gameBoard.state.board;
+        const props = gameBoard.state.properties;
 
-            if (!props) return;
-            if (props.gameOver === true) return;
-            if (board[cell.id-1].value !== "") return;
+        if (!props) return;
+        if (props.gameOver === true) return;
+        if (board[index].value !== "") return;
 
-            board[cell.id-1].value = props.currentPlayer.marker;
+        board[index].value = props.currentPlayer.marker;
 
-            controlDOM.updateBoard(cell, props.currentPlayer.marker);
+        controlDOM.updateBoard(init.allCells[index], props.currentPlayer.marker);
 
-            if (winCheck.winner(props.currentPlayer.marker)) return;
+        if (winCheck.winner(props.currentPlayer.marker)) return;
+        if (winCheck.tie()) return;
 
-            if (winCheck.tie()) return;
+        gameBoard.setMark(props.currentPlayer);
+    };
 
-            gameBoard.setMark(props.currentPlayer);
-        });
-    });
-
-    return {playerObject}
+    return { playerObject, playRound };
 })();
 
 const gameBoard = (() => {
@@ -128,7 +128,6 @@ const gameBoard = (() => {
             {id: 4, value: ""},{id: 5, value: ""},{id: 6, value: ""},
             {id: 7, value: ""},{id: 8, value: ""},{id: 9, value: ""}
         ],
-        properties: null
     };
 
     function controller(player1, player2) {
